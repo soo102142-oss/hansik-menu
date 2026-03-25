@@ -223,7 +223,7 @@ export default function HomePage() {
                             ✅ 사장님 등록
                           </span>
                           <a
-                            href={`https://map.kakao.com/link/search/${menu.restaurants.name} ${menu.restaurants.address}`}
+                            href={`https://map.kakao.com/link/search/${menu.restaurants.address}`}
                             target="_blank"
                             className="text-xs text-blue-500 hover:text-blue-700"
                           >
@@ -309,7 +309,25 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* 사장님 배너 */}
+          {/* 앱처럼 쓰기 배너 */}
+          <div className="mb-4">
+            <a href="/install" className="block bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-2xl p-4 hover:shadow-md transition">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">📱</span>
+                <div className="flex-1">
+                  <p className="font-bold text-purple-800 text-sm">
+                    홈 화면에 추가하면 앱처럼 쓸 수 있어요!
+                  </p>
+                  <p className="text-xs text-purple-600 mt-0.5">
+                    아이폰 · 안드로이드 모두 가능 → 설치 방법 보기
+                  </p>
+                </div>
+                <span className="text-purple-400">→</span>
+              </div>
+            </a>
+          </div>
+
+          {/* 사장님 배너 */}  
           <div className="mt-8 mb-8">
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6">
               <h2 className="font-bold text-orange-800 text-base">
