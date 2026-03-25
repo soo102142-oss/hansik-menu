@@ -120,7 +120,7 @@ export default function HomePage() {
                 이 자리에<br />광고를 넣어보세요
               </p>
               <a
-                href="mailto:contact@oneulhanki.com"
+                href="mailto:kbioin@naver.com"
                 className="text-xs text-orange-500 mt-2 block underline"
               >
                 광고 문의하기
@@ -338,13 +338,13 @@ export default function HomePage() {
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a
-                  href="mailto:contact@oneulhanki.com"
+                  href="mailto:kbioin@naver.com"
                   className="inline-block bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition"
                 >
                   ✉️ 이메일 문의
                 </a>
                 <a
-                  href="https://open.kakao.com/"
+                  href="https://open.kakao.com/o/sV5Fw9mi"
                   target="_blank"
                   className="inline-block bg-yellow-400 text-gray-900 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-yellow-500 transition"
                 >
@@ -365,7 +365,7 @@ export default function HomePage() {
               © 2026 오늘한끼 · 한식뷔페 메뉴 큐레이션 서비스
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              광고 문의: contact@oneulhanki.com
+              광고 문의: kbioin@naver.com
             </p>
           </footer>
         </main>
@@ -384,7 +384,7 @@ export default function HomePage() {
                 월 30,000원~
               </p>
               <a
-                href="mailto:contact@oneulhanki.com"
+                href="mailto:kbioin@naver.com"
                 className="block mt-2 text-xs text-orange-500 underline"
               >
                 신청하기
@@ -424,7 +424,7 @@ export default function HomePage() {
                 이 자리에<br />광고를 넣어보세요
               </p>
               <a
-                href="mailto:contact@oneulhanki.com"
+                href="mailto:kbioin@naver.com"
                 className="text-xs text-orange-500 mt-2 block underline"
               >
                 광고 문의하기

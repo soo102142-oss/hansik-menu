@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
-// ★ 사장님 비밀번호 (나중에 가게별로 따로 설정)
 const OWNER_PASSWORD = "hansik2026"
 
 const MENU_PRESETS: Record<string, string[]> = {
@@ -37,19 +36,17 @@ const MENU_PRESETS: Record<string, string[]> = {
   ],
 }
 
-const RESTAURANTS = [
-  { id: "11111111-1111-1111-1111-111111111111", name: "삼성한식뷔페" },
-  { id: "22222222-2222-2222-2222-222222222222", name: "서울한식뷔페" },
-  { id: "33333333-3333-3333-3333-333333333333", name: "대성한식뷔페" },
-  { id: "44444444-4444-4444-4444-444444444444", name: "블레드 여의도보훈점" },
-]
+interface Restaurant {
+  id: string
+  name: string
+}
 
 export default function OwnerPage() {
-  // ★ 비밀번호 잠금 상태
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [passwordInput, setPasswordInput] = useState("")
   const [passwordError, setPasswordError] = useState("")
 
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [selectedMenus, setSelectedMenus] = useState<
     { name: string; category: string }[]
   >([])
@@ -65,7 +62,23 @@ export default function OwnerPage() {
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"]
   const dayName = dayNames[today.getDay()]
 
-  // ★ 비밀번호 확인
+  // DB에서 가게 목록 불러오기
+  useEffect(() => {
+    async function fetchRestaurants() {
+      const { data } = await supabase
+        .from("restaurants")
+        .select("id, name")
+        .order("name")
+
+      if (data) {
+        setRestaurants(data)
+      }
+    }
+    if (isUnlocked) {
+      fetchRestaurants()
+    }
+  }, [isUnlocked])
+
   const checkPassword = () => {
     if (passwordInput === OWNER_PASSWORD) {
       setIsUnlocked(true)
@@ -133,7 +146,7 @@ export default function OwnerPage() {
     }
   }
 
-  // ★ 비밀번호 입력 화면 (잠금 상태)
+  // 비밀번호 화면
   if (!isUnlocked) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -141,9 +154,7 @@ export default function OwnerPage() {
           <div className="text-center mb-6">
             <p className="text-5xl mb-3">🔒</p>
             <h1 className="text-xl font-bold text-gray-900">사장님 전용 페이지</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              비밀번호를 입력해주세요
-            </p>
+            <p className="text-sm text-gray-400 mt-1">비밀번호를 입력해주세요</p>
           </div>
           <input
             type="password"
@@ -158,9 +169,7 @@ export default function OwnerPage() {
                        focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
           {passwordError && (
-            <p className="text-red-500 text-xs text-center mt-2">
-              ⚠️ {passwordError}
-            </p>
+            <p className="text-red-500 text-xs text-center mt-2">⚠️ {passwordError}</p>
           )}
           <button
             onClick={checkPassword}
@@ -168,6 +177,18 @@ export default function OwnerPage() {
           >
             입장하기
           </button>
+
+          {/* 새 가게 등록 링크 */}
+          <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400 mb-2">아직 가게 등록을 안 하셨나요?</p>
+            <a
+              href="/owner/register"
+              className="text-sm text-orange-600 font-medium hover:underline"
+            >
+              🏪 새 가게 등록하기 →
+            </a>
+          </div>
+
           <a
             href="/"
             className="block text-center text-sm text-gray-400 mt-4 hover:text-orange-600"
@@ -185,9 +206,7 @@ export default function OwnerPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center px-6">
           <p className="text-7xl mb-6">🎉</p>
-          <h1 className="text-2xl font-bold text-gray-900">
-            오늘 메뉴 등록 완료!
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">오늘 메뉴 등록 완료!</h1>
           <p className="text-gray-500 mt-2">
             {month}월 {day}일 메뉴가 등록되었습니다.
             <br />
@@ -250,10 +269,9 @@ export default function OwnerPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4">
+        {/* 가게 선택 */}
         <div className="mb-4">
-          <label className="text-sm font-semibold text-gray-700">
-            🏪 가게 선택
-          </label>
+          <label className="text-sm font-semibold text-gray-700">🏪 가게 선택</label>
           <select
             value={selectedShop}
             onChange={(e) => {
@@ -264,7 +282,7 @@ export default function OwnerPage() {
                        focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
           >
             <option value="">-- 가게를 선택하세요 --</option>
-            {RESTAURANTS.map((r) => (
+            {restaurants.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
               </option>
@@ -273,6 +291,12 @@ export default function OwnerPage() {
           {errorMsg && (
             <p className="text-red-500 text-xs mt-1">⚠️ {errorMsg}</p>
           )}
+          <a
+            href="/owner/register"
+            className="text-xs text-orange-500 mt-1 inline-block hover:underline"
+          >
+            + 목록에 내 가게가 없으면? 새 가게 등록하기
+          </a>
         </div>
 
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
@@ -311,9 +335,7 @@ export default function OwnerPage() {
 
         {Object.entries(MENU_PRESETS).map(([category, menus]) => (
           <div key={category} className="mb-5">
-            <h3 className="text-sm font-bold text-gray-800 mb-2">
-              {category}
-            </h3>
+            <h3 className="text-sm font-bold text-gray-800 mb-2">{category}</h3>
             <div className="flex flex-wrap gap-1.5">
               {menus.map((name) => {
                 const isSelected = selectedMenus.some((m) => m.name === name)
