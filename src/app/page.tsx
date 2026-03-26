@@ -7,12 +7,20 @@ interface MenuItem {
   name: string
   category: string
 }
+
+interface RestaurantInfo {
+  name: string
+  address: string
+  price: string
+}
+
 interface MenuData {
   id: string
+  restaurant_id: string
   menu_date: string
   items: MenuItem[]
   source: string
-  restaurants: { id: string; name: string; address: string; price: string }
+  restaurants: RestaurantInfo
 }
 
 export default function HomePage() {
@@ -39,22 +47,22 @@ export default function HomePage() {
     async function fetchMenus() {
       const { data, error } = await supabase
         .from("daily_menus")
-        .select("id, menu_date, items, source, restaurants (id, name, address, price)")
+        .select("id, restaurant_id, menu_date, items, source, restaurants (name, address, price)")
         .eq("menu_date", todayStr)
-      if (!error && data) setMenus(data as MenuData[])
+      if (!error && data) setMenus(data as unknown as MenuData[])
       setLoading(false)
     }
     fetchMenus()
   }, [todayStr])
 
-  const toggleBookmark = (restaurant: { id: string; name: string; address: string; price: string }) => {
+  const toggleBookmark = (restaurantId: string, name: string, address: string, price: string) => {
     const saved = localStorage.getItem("bookmarks")
     let list = saved ? JSON.parse(saved) : []
-    const exists = list.find((b: { id: string }) => b.id === restaurant.id)
+    const exists = list.find((b: { id: string }) => b.id === restaurantId)
     if (exists) {
-      list = list.filter((b: { id: string }) => b.id !== restaurant.id)
+      list = list.filter((b: { id: string }) => b.id !== restaurantId)
     } else {
-      list.push(restaurant)
+      list.push({ id: restaurantId, name, address, price })
     }
     localStorage.setItem("bookmarks", JSON.stringify(list))
     setBookmarks(list.map((b: { id: string }) => b.id))
@@ -137,7 +145,7 @@ export default function HomePage() {
                 const otherItems = menu.items.filter(
                   (i) => i.category !== "🔥 메인" && i.category !== "🍲 국/찌개"
                 )
-                const isBookmarked = bookmarks.includes(menu.restaurants.id)
+                const isBookmarked = bookmarks.includes(menu.restaurant_id)
                 return (
                   <div key={menu.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                     <div className="flex justify-between items-start mb-3">
@@ -152,7 +160,7 @@ export default function HomePage() {
                           </span>
                         )}
                         <button
-                          onClick={() => toggleBookmark(menu.restaurants)}
+                          onClick={() => toggleBookmark(menu.restaurant_id, menu.restaurants.name, menu.restaurants.address, menu.restaurants.price)}
                           className="text-2xl transition hover:scale-110"
                         >
                           {isBookmarked ? "⭐" : "☆"}
