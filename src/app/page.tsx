@@ -81,7 +81,6 @@ export default function HomePage() {
           </h2>
         </div>
 
-        {/* 빠른 메뉴 */}
         <div className="px-4 py-3 grid grid-cols-4 gap-2">
           <a href="/nearby" className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:border-orange-400 transition">
             <p className="text-2xl mb-1">📍</p>
@@ -94,7 +93,7 @@ export default function HomePage() {
           <a href="/board" className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:border-orange-400 transition">
             <p className="text-2xl mb-1">📋</p>
             <p className="text-xs font-medium text-gray-600">게시판</p>
-            <p className="text-xs text-gray-400" style={{fontSize: "9px"}}>(가게추천·후기·자유글)</p>
+            <p style={{fontSize: 9}} className="text-gray-400">(가게추천/후기/자유글)</p>
           </a>
           <a href="/bookmark" className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:border-orange-400 transition">
             <p className="text-2xl mb-1">⭐</p>
@@ -102,7 +101,6 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* 지역 선택 */}
         <div className="px-4 py-2 flex gap-2 overflow-x-auto">
           {["여의도", "강남", "종로/광화문", "구로/가산", "마포/홍대", "전체"].map((district, i) => (
             <button
@@ -118,7 +116,6 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* 오늘 메뉴 카드 */}
         <div className="px-4 py-4">
           {loading ? (
             <div className="text-center py-20">
@@ -166,7 +163,7 @@ export default function HomePage() {
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {mainItems.map((item, idx) => (
                           <span key={idx} className="bg-red-50 text-red-700 px-2.5 py-1 rounded-lg text-sm font-medium">
-                            🔥 {item.name}
+                            {item.name}
                           </span>
                         ))}
                       </div>
@@ -199,33 +196,23 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* 광고/제휴 배너 */}
         <div className="px-4 py-4">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4">
-            <p className="font-bold text-blue-800 text-sm">📢 광고 · 제휴 문의</p>
+            <p className="font-bold text-blue-800 text-sm">📢 광고/제휴 문의</p>
             <p className="text-xs text-blue-600 mt-1">
-              한식뷔페 사장님, 밀키트·반찬 업체, 식자재 납품업체 등 제휴·광고를 원하시면 편하게 연락주세요!
+              한식뷔페 사장님, 밀키트/반찬 업체, 식자재 납품업체 등 제휴/광고를 원하시면 편하게 연락주세요!
             </p>
             <div className="flex gap-2 mt-3">
-              <a
-                href="mailto:kbioin@naver.com"
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
-              >
+              <a href="mailto:kbioin@naver.com" className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-medium hover:bg-blue-700 transition">
                 이메일 문의
               </a>
-              <a
-                href="https://open.kakao.com/o/sV5Fw9mi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-xl text-xs font-medium hover:bg-yellow-500 transition"
-              >
+              <a href="https://open.kakao.com/o/sV5Fw9mi" target="_blank" rel="noopener noreferrer" className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-xl text-xs font-medium hover:bg-yellow-500 transition">
                 카카오톡 문의
               </a>
             </div>
           </div>
         </div>
 
-        {/* 사장님 배너 */}
         <div className="px-4 pb-4">
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
             <h2 className="font-bold text-orange-800">🏪 한식뷔페 사장님이신가요?</h2>
