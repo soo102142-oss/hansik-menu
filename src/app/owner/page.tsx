@@ -207,7 +207,7 @@ export default function OwnerPage() {
         <div className="text-center px-6">
           <p className="text-7xl mb-6">🎉</p>
           <h1 className="text-2xl font-bold text-gray-900">오늘 메뉴 등록 완료!</h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-black mt-2">
             {month}월 {day}일 메뉴가 등록되었습니다.
             <br />
             주변 직장인들이 지금 바로 확인할 수 있어요.
@@ -288,6 +288,7 @@ export default function OwnerPage() {
               </option>
             ))}
           </select>
+          
           {errorMsg && (
             <p className="text-red-500 text-xs mt-1">⚠️ {errorMsg}</p>
           )}
