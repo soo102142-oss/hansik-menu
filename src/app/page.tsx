@@ -156,7 +156,7 @@ export default function HomePage() {
           <div className="space-y-4">
             {/* 메뉴가 있는 식당 */}
             {filteredMenus.map((menu) => {
-              const items = menu.items.split(",").map((s) => s.trim()).filter(Boolean)
+              const items = Array.isArray(menu.items) ? menu.items.map((s: string) => s.trim()) : menu.items.split(",").map((s: string) => s.trim()).filter(Boolean)
               return (
                 <div key={menu.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
