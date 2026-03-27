@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 
 interface Restaurant {
@@ -16,83 +16,61 @@ export default function MapPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Restaurant | null>(null)
-  const [mapLoaded, setMapLoaded] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchData() {
       const { data } = await supabase.from("restaurants").select("*").order("name")
       if (data) setRestaurants(data as Restaurant[])
       setLoading(false)
     }
-    fetch()
+    fetchData()
   }, [])
 
   useEffect(() => {
-    if (loading || restaurants.length === 0) return
-
-    const existingScript = document.getElementById("kakao-map-script")
-    if (existingScript) {
-      if ((window as any).kakao && (window as any).kakao.maps) {
-        (window as any).kakao.maps.load(() => initMap())
-      }
-      return
-    }
+    if (loading || restaurants.length === 0 || !mapRef.current) return
 
     const script = document.createElement("script")
-    script.id = "kakao-map-script"
-    script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=d47e131cb751b75e310037e87fdcbc58&autoload=false&libraries=services"
-    script.onload = () => {
-      (window as any).kakao.maps.load(() => initMap())
-    }
+    script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=d47e131cb751b75e310037e87fdcbc58&libraries=services&autoload=false"
     document.head.appendChild(script)
-  }, [loading, restaurants])
 
-  const initMap = () => {
-    const kakao = (window as any).kakao
-    const container = document.getElementById("kakao-map")
-    if (!container) return
+    script.onload = () => {
+      const kakao = (window as any).kakao
+      kakao.maps.load(() => {
+        const container = mapRef.current
+        const center = new kakao.maps.LatLng(37.5225, 126.9265)
+        const map = new kakao.maps.Map(container, { center, level: 5 })
+        const geocoder = new kakao.maps.services.Geocoder()
 
-    const center = new kakao.maps.LatLng(37.5225, 126.9265)
-    const map = new kakao.maps.Map(container, { center, level: 5 })
-    const geocoder = new kakao.maps.services.Geocoder()
-    const bounds = new kakao.maps.LatLngBounds()
-    let markerCount = 0
+        restaurants.forEach((r) => {
+          geocoder.addressSearch(r.address, (result: any, status: any) => {
+            if (status === kakao.maps.services.Status.OK) {
+              const coords = new kakao.maps.LatLng(result[0].y, result[0].x)
+              const marker = new kakao.maps.Marker({ map, position: coords })
 
-    restaurants.forEach((r) => {
-      geocoder.addressSearch(r.address, (result: any, status: any) => {
-        if (status === kakao.maps.services.Status.OK) {
-          const coords = new kakao.maps.LatLng(result[0].y, result[0].x)
-          bounds.extend(coords)
+              const label = document.createElement("div")
+              label.innerHTML = `
+                <div style="padding:5px 10px;font-size:12px;font-weight:bold;background:white;border:2px solid #f97316;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                  🍚 ${r.name} ${r.price ? `<span style="color:#f97316;">${r.price}원</span>` : ""}
+                </div>
+              `
+              const overlay = new kakao.maps.CustomOverlay({
+                content: label,
+                position: coords,
+                yAnchor: 2.5,
+              })
+              overlay.setMap(map)
 
-          const marker = new kakao.maps.Marker({ map, position: coords })
-
-          const content = `
-            <div style="padding:6px 10px;font-size:12px;font-weight:bold;background:white;border:2px solid #f97316;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;">
-              🍚 ${r.name}
-              ${r.price ? `<span style="color:#f97316;margin-left:4px;">${r.price}원</span>` : ""}
-            </div>
-          `
-          const overlay = new kakao.maps.CustomOverlay({
-            content,
-            position: coords,
-            yAnchor: 2.2,
+              kakao.maps.event.addListener(marker, "click", () => {
+                setSelected(r)
+                map.setCenter(coords)
+              })
+            }
           })
-          overlay.setMap(map)
-
-          kakao.maps.event.addListener(marker, "click", () => {
-            setSelected(r)
-          })
-
-          markerCount++
-          if (markerCount === restaurants.length) {
-            map.setBounds(bounds)
-          }
-        }
+        })
       })
-    })
-
-    setMapLoaded(true)
-  }
+    }
+  }, [loading, restaurants])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -113,7 +91,7 @@ export default function MapPage() {
         </div>
       ) : (
         <>
-          <div id="kakao-map" className="w-full" style={{ height: "55vh" }} />
+          <div ref={mapRef} className="w-full" style={{ height: "55vh" }} />
 
           {selected && (
             <div className="max-w-3xl mx-auto px-4 py-3">
