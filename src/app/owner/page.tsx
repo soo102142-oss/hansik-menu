@@ -3,406 +3,287 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
-const OWNER_PASSWORD = "hansik2026"
-
-const MENU_PRESETS: Record<string, string[]> = {
-  "🔥 메인": [
-    "제육볶음", "불고기", "소불고기", "오징어볶음", "닭볶음탕",
-    "고등어구이", "삼치구이", "갈치구이", "돈까스", "갈비찜",
-    "두부조림", "생선까스", "장조림", "떡갈비", "수육",
-    "치킨", "탕수육", "카레", "비빔밥", "볶음밥",
-  ],
-  "🍲 국/찌개": [
-    "된장찌개", "김치찌개", "순두부찌개", "동태찌개", "부대찌개",
-    "미역국", "콩나물국", "소고기무국", "북어국", "우거지국",
-    "갈비탕", "설렁탕", "삼계탕", "뼈해장국", "어묵국",
-  ],
-  "🥬 반찬": [
-    "시금치나물", "콩나물무침", "감자조림", "어묵볶음", "계란말이",
-    "미역줄기볶음", "고사리나물", "잡채", "파전", "호박볶음",
-    "멸치볶음", "오징어채볶음", "깻잎절임", "무생채", "도라지나물",
-    "브로콜리", "샐러드", "두부부침", "동그랑땡", "만두",
-  ],
-  "🥒 김치": [
-    "배추김치", "깍두기", "파김치", "총각김치", "겉절이",
-    "열무김치", "오이소박이", "부추김치",
-  ],
-  "🍚 밥/면": [
-    "백미밥", "흑미밥", "잡곡밥", "볶음밥", "비빔밥",
-    "잔치국수", "쫄면", "냉면",
-  ],
-  "🍊 후식": [
-    "과일", "커피", "식혜", "떡", "요거트", "음료수",
-  ],
-}
-
 interface Restaurant {
   id: string
   name: string
 }
 
+interface MenuItem {
+  category: string
+  name: string
+}
+
+const CATEGORIES = [
+  { label: "🔥 메인", value: "메인" },
+  { label: "🍲 국/찌개", value: "국/찌개" },
+  { label: "🥗 반찬", value: "반찬" },
+  { label: "🍚 밥/면", value: "밥/면" },
+  { label: "🥬 샐러드", value: "샐러드" },
+  { label: "🍰 기타", value: "기타" },
+]
+
+const OWNER_PASSWORD = "hansik2024!"
+
 export default function OwnerPage() {
-  const [isUnlocked, setIsUnlocked] = useState(false)
-  const [passwordInput, setPasswordInput] = useState("")
-  const [passwordError, setPasswordError] = useState("")
-
+  const [authenticated, setAuthenticated] = useState(false)
+  const [password, setPassword] = useState("")
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
-  const [selectedMenus, setSelectedMenus] = useState<
-    { name: string; category: string }[]
-  >([])
-  const [customInput, setCustomInput] = useState("")
-  const [selectedShop, setSelectedShop] = useState("")
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
+  const [selectedRestaurant, setSelectedRestaurant] = useState("")
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([{ category: "메인", name: "" }])
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [registeredItems, setRegisteredItems] = useState<string[]>([])
+  const [selectedDate, setSelectedDate] = useState("")
 
+  // 날짜 범위: 오늘 기준 앞뒤 7일
   const today = new Date()
-  const month = today.getMonth() + 1
-  const day = today.getDate()
-  const dayNames = ["일", "월", "화", "수", "목", "금", "토"]
-  const dayName = dayNames[today.getDay()]
+  const minDate = new Date(today)
+  minDate.setDate(today.getDate() - 7)
+  const maxDate = new Date(today)
+  maxDate.setDate(today.getDate() + 7)
 
-  // DB에서 가게 목록 불러오기
+  const formatDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+
   useEffect(() => {
+    setSelectedDate(formatDateStr(today))
+  }, [])
+
+  useEffect(() => {
+    if (!authenticated) return
     async function fetchRestaurants() {
-      const { data } = await supabase
-        .from("restaurants")
-        .select("id, name")
-        .order("name")
-
-      if (data) {
-        setRestaurants(data)
-      }
+      const { data } = await supabase.from("restaurants").select("id, name").order("name")
+      if (data) setRestaurants(data)
     }
-    if (isUnlocked) {
-      fetchRestaurants()
-    }
-  }, [isUnlocked])
+    fetchRestaurants()
+  }, [authenticated])
 
-  const checkPassword = () => {
-    if (passwordInput === OWNER_PASSWORD) {
-      setIsUnlocked(true)
-      setPasswordError("")
+  const handleLogin = () => {
+    if (password === OWNER_PASSWORD) {
+      setAuthenticated(true)
     } else {
-      setPasswordError("비밀번호가 틀렸습니다")
+      alert("비밀번호가 틀렸습니다!")
     }
   }
 
-  const toggleMenu = (name: string, category: string) => {
-    setSelectedMenus((prev) => {
-      const exists = prev.find((m) => m.name === name)
-      if (exists) {
-        return prev.filter((m) => m.name !== name)
-      }
-      return [...prev, { name, category }]
-    })
+  const addMenuItem = () => {
+    setMenuItems([...menuItems, { category: "반찬", name: "" }])
   }
 
-  const addCustom = () => {
-    const name = customInput.trim()
-    if (!name) return
-    if (selectedMenus.find((m) => m.name === name)) return
-    setSelectedMenus((prev) => [...prev, { name, category: "기타" }])
-    setCustomInput("")
+  const removeMenuItem = (index: number) => {
+    if (menuItems.length === 1) return
+    setMenuItems(menuItems.filter((_, i) => i !== index))
   }
 
-  const clearAll = () => {
-    setSelectedMenus([])
+  const updateMenuItem = (index: number, field: keyof MenuItem, value: string) => {
+    const updated = [...menuItems]
+    updated[index] = { ...updated[index], [field]: value }
+    setMenuItems(updated)
   }
 
   const handleSubmit = async () => {
-    if (selectedMenus.length === 0) return
-    if (!selectedShop) {
-      setErrorMsg("가게를 선택해주세요!")
+    if (!selectedRestaurant) {
+      alert("가게를 선택해주세요!")
+      return
+    }
+    if (!selectedDate) {
+      alert("날짜를 선택해주세요!")
+      return
+    }
+    const validItems = menuItems.filter((item) => item.name.trim())
+    if (validItems.length === 0) {
+      alert("메뉴를 최소 1개 입력해주세요!")
       return
     }
 
-    setIsLoading(true)
-    setErrorMsg("")
+    setLoading(true)
 
-    const todayStr =
-      today.getFullYear() + "-" +
-      String(today.getMonth() + 1).padStart(2, "0") + "-" +
-      String(today.getDate()).padStart(2, "0")
-
-    const { error } = await supabase
+    // 해당 날짜 기존 메뉴 삭제
+    await supabase
       .from("daily_menus")
-      .upsert(
-        {
-          restaurant_id: selectedShop,
-          menu_date: todayStr,
-          items: selectedMenus,
-          source: "owner",
-        },
-        { onConflict: "restaurant_id,menu_date" }
-      )
+      .delete()
+      .eq("restaurant_id", selectedRestaurant)
+      .eq("menu_date", selectedDate)
 
-    setIsLoading(false)
+    // 새 메뉴 등록
+    const itemsData = validItems.map((item) => ({
+      category: item.category,
+      name: item.name.trim(),
+    }))
 
-    if (error) {
-      setErrorMsg("저장 실패: " + error.message)
+    const { error } = await supabase.from("daily_menus").insert({
+      restaurant_id: selectedRestaurant,
+      menu_date: selectedDate,
+      items: itemsData,
+      source: "owner",
+    })
+
+    setLoading(false)
+
+    if (!error) {
+      setSuccess(true)
+      setRegisteredItems(validItems.map((i) => i.name.trim()))
     } else {
-      setIsSubmitted(true)
+      alert("등록 실패: " + error.message)
     }
   }
 
-  // 비밀번호 화면
-  if (!isUnlocked) {
+  if (success) {
+    const dateObj = new Date(selectedDate + "T00:00:00")
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl border shadow-sm p-8 max-w-sm w-full mx-4">
-          <div className="text-center mb-6">
-            <p className="text-5xl mb-3">🔒</p>
-            <h1 className="text-xl font-bold text-gray-900">사장님 전용 페이지</h1>
-            <p className="text-sm text-gray-400 mt-1">비밀번호를 입력해주세요</p>
-          </div>
-          <input
-            type="password"
-            value={passwordInput}
-            onChange={(e) => {
-              setPasswordInput(e.target.value)
-              setPasswordError("")
-            }}
-            onKeyDown={(e) => e.key === "Enter" && checkPassword()}
-            placeholder="비밀번호 입력"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-center
-                       focus:outline-none focus:ring-2 focus:ring-orange-400"
-          />
-          {passwordError && (
-            <p className="text-red-500 text-xs text-center mt-2">⚠️ {passwordError}</p>
-          )}
-          <button
-            onClick={checkPassword}
-            className="w-full mt-4 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition"
-          >
-            입장하기
-          </button>
-
-          {/* 새 가게 등록 링크 */}
-          <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 mb-2">아직 가게 등록을 안 하셨나요?</p>
-            <a
-              href="/owner/register"
-              className="text-sm text-orange-600 font-medium hover:underline"
-            >
-              🏪 새 가게 등록하기 →
-            </a>
-          </div>
-
-          <a
-            href="/"
-            className="block text-center text-sm text-gray-400 mt-4 hover:text-orange-600"
-          >
-            ← 메인 페이지로
-          </a>
-        </div>
-      </div>
-    )
-  }
-
-  // 등록 완료 화면
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center px-6">
-          <p className="text-7xl mb-6">🎉</p>
-          <h1 className="text-2xl font-bold text-gray-900">오늘 메뉴 등록 완료!</h1>
-          <p className="text-black mt-2">
-            {month}월 {day}일 메뉴가 등록되었습니다.
-            <br />
-            주변 직장인들이 지금 바로 확인할 수 있어요.
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+          <p className="text-6xl mb-4">🎉</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">오늘 메뉴 등록 완료!</h2>
+          <p className="text-gray-500 mb-4">
+            {dateObj.getMonth() + 1}월 {dateObj.getDate()}일 메뉴가 등록되었습니다.
+            <br />주변 직장인들이 지금 바로 확인할 수 있어요.
           </p>
-          <div className="mt-6 bg-white rounded-2xl border p-4 text-left">
-            <p className="text-sm font-bold text-gray-700 mb-2">
-              등록한 메뉴 ({selectedMenus.length}개)
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedMenus.map((m, i) => (
-                <span
-                  key={i}
-                  className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-sm"
-                >
-                  {m.name}
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+            <p className="font-bold text-gray-700 mb-2">등록한 메뉴 ({registeredItems.length}개)</p>
+            <div className="flex flex-wrap gap-2">
+              {registeredItems.map((item, i) => (
+                <span key={i} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
+                  {item}
                 </span>
               ))}
             </div>
           </div>
-          <div className="mt-6 flex flex-col gap-3">
-            <a
-              href="/"
-              className="bg-orange-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-orange-700 transition inline-block"
-            >
-              🏠 메인 페이지에서 확인하기
-            </a>
-            <button
-              onClick={() => {
-                setIsSubmitted(false)
-                setSelectedMenus([])
-              }}
-              className="text-orange-600 underline text-sm"
-            >
-              다시 등록하기
-            </button>
-          </div>
+          <a href="/" className="block w-full bg-orange-500 text-white py-3 rounded-xl font-bold mb-3">
+            🏠 메인 페이지에서 확인하기
+          </a>
+          <button
+            onClick={() => {
+              setSuccess(false)
+              setMenuItems([{ category: "메인", name: "" }])
+            }}
+            className="text-orange-500 underline text-sm"
+          >
+            다시 등록하기
+          </button>
         </div>
       </div>
     )
   }
 
-  // 메뉴 등록 화면
-  return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-white border-b px-4 py-4 sticky top-0 z-50">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold text-orange-700">
-              🍚 오늘한끼 · 메뉴 등록
-            </h1>
-            <p className="text-sm text-gray-400">
-              {month}월 {day}일 ({dayName}요일) 메뉴
-            </p>
-          </div>
-          <a href="/" className="text-sm text-gray-400 hover:text-orange-600">
-            ← 메인
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full">
+          <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">🔑 사장님 전용</h1>
+          <p className="text-sm text-gray-500 text-center mb-6">메뉴를 등록하려면 비밀번호를 입력하세요</p>
+          <input
+            type="password"
+            placeholder="비밀번호 입력"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            className="w-full p-3 border border-gray-300 rounded-xl mb-4 text-black placeholder-gray-400"
+          />
+          <button onClick={handleLogin} className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold">
+            입장하기
+          </button>
+          <a href="/" className="block text-center text-sm text-gray-400 mt-4 underline">
+            ← 메인으로
           </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b px-4 py-4 sticky top-0 z-50">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <a href="/" className="text-2xl">←</a>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">📝 메뉴 등록</h1>
+            <p className="text-xs text-gray-500">오늘의 메뉴를 등록해주세요</p>
+          </div>
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* 가게 선택 */}
-        <div className="mb-4">
-          <label className="text-sm font-semibold text-gray-700">🏪 가게 선택</label>
+        <div>
+          <label className="block text-sm font-bold text-gray-900 mb-2">🏪 가게 선택</label>
           <select
-            value={selectedShop}
-            onChange={(e) => {
-              setSelectedShop(e.target.value)
-              setErrorMsg("")
-            }}
-            className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm
-                       focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+            value={selectedRestaurant}
+            onChange={(e) => setSelectedRestaurant(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl text-black bg-white"
           >
-            <option value="">-- 가게를 선택하세요 --</option>
+            <option value="" className="text-black">-- 가게를 선택하세요 --</option>
             {restaurants.map((r) => (
-              <option key={r.id} value={r.id}>
+              <option key={r.id} value={r.id} className="text-black bg-white">
                 {r.name}
               </option>
             ))}
           </select>
-          
-          {errorMsg && (
-            <p className="text-red-500 text-xs mt-1">⚠️ {errorMsg}</p>
-          )}
-          <a
-            href="/owner/register"
-            className="text-xs text-orange-500 mt-1 inline-block hover:underline"
-          >
-            + 목록에 내 가게가 없으면? 새 가게 등록하기
-          </a>
         </div>
 
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
-          <p className="text-sm text-orange-700 font-medium">
-            👇 오늘 메뉴를 탭해서 선택하세요 (터치만 하면 됩니다!)
-          </p>
+        {/* 날짜 선택 */}
+        <div>
+          <label className="block text-sm font-bold text-gray-900 mb-2">📅 날짜 선택</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            min={formatDateStr(minDate)}
+            max={formatDateStr(maxDate)}
+            className="w-full p-3 border border-gray-300 rounded-xl text-black bg-white"
+          />
+          <p className="text-xs text-gray-500 mt-1">오늘 기준 앞뒤 7일 이내 날짜만 선택 가능</p>
         </div>
 
-        {selectedMenus.length > 0 && (
-          <div className="bg-white border border-orange-200 rounded-2xl p-4 mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-sm font-bold text-gray-700">
-                ✅ 선택한 메뉴 ({selectedMenus.length}개)
-              </p>
-              <button
-                onClick={clearAll}
-                className="text-xs text-red-400 hover:text-red-600"
-              >
-                전체삭제
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedMenus.map((m, i) => (
-                <button
-                  key={i}
-                  onClick={() => toggleMenu(m.name, m.category)}
-                  className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 
-                             px-2.5 py-1 rounded-lg text-sm hover:bg-red-100 hover:text-red-600 transition"
+        {/* 메뉴 입력 */}
+        <div>
+          <label className="block text-sm font-bold text-gray-900 mb-2">🍽️ 메뉴 입력</label>
+          <div className="space-y-3">
+            {menuItems.map((item, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <select
+                  value={item.category}
+                  onChange={(e) => updateMenuItem(index, "category", e.target.value)}
+                  className="w-28 p-3 border border-gray-300 rounded-xl text-black bg-white text-sm"
                 >
-                  {m.name} ✕
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value} className="text-black">
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="메뉴명 입력"
+                  value={item.name}
+                  onChange={(e) => updateMenuItem(index, "name", e.target.value)}
+                  className="flex-1 p-3 border border-gray-300 rounded-xl text-black placeholder-gray-400"
+                />
+                <button
+                  onClick={() => removeMenuItem(index)}
+                  className="w-10 h-10 bg-red-100 text-red-500 rounded-xl font-bold text-lg"
+                >
+                  ✕
                 </button>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
-
-        {Object.entries(MENU_PRESETS).map(([category, menus]) => (
-          <div key={category} className="mb-5">
-            <h3 className="text-sm font-bold text-gray-800 mb-2">{category}</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {menus.map((name) => {
-                const isSelected = selectedMenus.some((m) => m.name === name)
-                return (
-                  <button
-                    key={name}
-                    onClick={() => toggleMenu(name, category)}
-                    className={`px-3 py-1.5 rounded-full text-sm transition
-                      ${
-                        isSelected
-                          ? "bg-orange-600 text-white font-medium shadow-sm"
-                          : "bg-white border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600"
-                      }`}
-                  >
-                    {isSelected ? "✓ " : "+ "}
-                    {name}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        <div className="mb-6">
-          <h3 className="text-sm font-bold text-gray-800 mb-2">
-            ✏️ 목록에 없는 메뉴 직접 입력
-          </h3>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCustom()}
-              placeholder="메뉴 이름 입력 후 추가"
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm
-                         focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-            <button
-              onClick={addCustom}
-              className="px-5 py-2.5 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900"
-            >
-              추가
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
-        <div className="max-w-2xl mx-auto">
           <button
-            onClick={handleSubmit}
-            disabled={selectedMenus.length === 0 || isLoading}
-            className={`w-full py-4 rounded-2xl text-base font-bold transition
-              ${
-                selectedMenus.length > 0 && !isLoading
-                  ? "bg-orange-600 text-white hover:bg-orange-700 shadow-lg"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+            onClick={addMenuItem}
+            className="mt-3 w-full py-3 border-2 border-dashed border-orange-300 text-orange-500 rounded-xl font-medium"
           >
-            {isLoading
-              ? "⏳ 등록 중..."
-              : selectedMenus.length > 0
-              ? `📝 오늘 메뉴 등록하기 (${selectedMenus.length}개)`
-              : "메뉴를 선택해주세요"}
+            + 메뉴 추가
           </button>
         </div>
+
+        {/* 등록 버튼 */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-orange-500 text-white py-4 rounded-xl font-bold text-lg disabled:bg-gray-300"
+        >
+          {loading ? "등록 중..." : "✅ 메뉴 등록하기"}
+        </button>
       </div>
     </div>
   )
