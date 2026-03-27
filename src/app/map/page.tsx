@@ -50,7 +50,7 @@ export default function MapPage() {
 
               const label = document.createElement("div")
               label.innerHTML = `
-                <div style="padding:5px 10px;font-size:12px;font-weight:bold;background:white;border:2px solid #f97316;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                <div style="padding:5px 10px;ont-size:12px;font-weight:bold;color:#000000;background:white;border:2px solid #f97316;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
                   🍚 ${r.name} ${r.price ? `<span style="color:#f97316;">${r.price}원</span>` : ""}
                 </div>
               `
