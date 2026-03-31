@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js"
 import type { Metadata } from "next"
 import Script from "next/script"
 import "./globals.css"
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-95FE5Q9ZB8"
           strategy="afterInteractive"
@@ -42,11 +44,13 @@ export default function RootLayout({
             gtag('config', 'G-95FE5Q9ZB8');
           `}
         </Script>
-        <Script
+
+        {/* ✅ Google AdSense - 수정됨 */}
+        <script
+          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4326462287360425"
-          strategy="afterInteractive"
           crossOrigin="anonymous"
-        />
+        ></script>
       </head>
       <body>{children}</body>
     </html>
