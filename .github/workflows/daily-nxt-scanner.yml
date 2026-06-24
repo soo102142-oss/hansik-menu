@@ -20,21 +20,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Restore scanner bundle
-        run: |
-          base64 -d scanner_bundle.tar.gz.b64 > scanner_bundle.tar.gz
-          tar -xzf scanner_bundle.tar.gz
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install scanner dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r scanner/requirements.txt
+          pip install -r scanner_requirements.txt
 
       - name: Resolve target date
         id: date
@@ -52,17 +47,16 @@ jobs:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
           TZ: Asia/Seoul
         run: |
-          python scanner/main.py --date "${{ steps.date.outputs.target_date }}"
+          python github_actions_runner.py --date "${{ steps.date.outputs.target_date }}"
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: nxt-reports-${{ steps.date.outputs.target_date }}
           path: |
-            scanner/reports/${{ steps.date.outputs.target_date }}_nxt_candidates.csv
-            scanner/reports/${{ steps.date.outputs.target_date }}_nxt_candidates.json
-            scanner/reports/${{ steps.date.outputs.target_date }}_nxt_report.html
-            scanner/reports/${{ steps.date.outputs.target_date }}_nxt_candidates.xlsx
-            scanner/logs/${{ steps.date.outputs.target_date }}_scanner.log
+            reports/${{ steps.date.outputs.target_date }}_nxt_candidates.csv
+            reports/${{ steps.date.outputs.target_date }}_nxt_candidates.json
+            reports/${{ steps.date.outputs.target_date }}_nxt_report.html
+            reports/${{ steps.date.outputs.target_date }}_nxt_candidates.xlsx
           if-no-files-found: error
           retention-days: 30
